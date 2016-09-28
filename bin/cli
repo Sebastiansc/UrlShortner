@@ -1,0 +1,29 @@
+require 'launchy'
+def get_email
+  puts "Plese provide an email"
+  p ">"
+  email = gets.chomp
+  find_user(email)
+end
+
+def find_user(email)
+  user = User.find_by(email: email)
+  puts "Would you like to access visited urls or create new one (v, c)"
+  input = gets.chomp
+  input == "c" ? create_url(user) : revisit_url(user)
+end
+
+def create_url(user)
+  puts "Enter a url: "
+  url = gets.chomp
+  new_url = ShortenedUrl.create_for_user_a_long_url!(user, url)
+  puts new_url.short_url
+  Launchy.open(new_url.long_url)
+end
+
+def revisit_url(user)
+  puts user.submitted_urls.pluck(:long_url, :short_url)
+end
+
+
+get_email
