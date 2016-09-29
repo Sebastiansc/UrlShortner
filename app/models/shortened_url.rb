@@ -30,6 +30,15 @@ class ShortenedUrl < ActiveRecord::Base
     through: :taggings,
     source: :tag
 
+  has_many :votes,
+    primary_key: :id,
+    foreign_key: :url_id,
+    class_name: :Vote
+
+  has_many :voters,
+    through: :votes,
+    source: :user
+
   def non_premium_limit
     user = User.find(self.user_id)
     if !user.premium && user.submitted_urls.count >= 5
@@ -62,6 +71,18 @@ class ShortenedUrl < ActiveRecord::Base
     end while self.exists?(short_url)
 
     short_url
+  end
+
+  def self.top
+    #we find the sum
+    ShortenedUrl.where("id IN (?)", sorted_top).limit(2)
+  end
+
+  def self.sorted_top
+    ShortenedUrl.joins(:votes).group("votes.url_id")
+                .sum(:vote)
+                .sort_by { |_,v| -v }
+                .map { |k,_| k }
   end
 
   def self.create_for_user_a_long_url!(user, long_url)
